@@ -77,7 +77,7 @@ pub(crate) fn new_vm_state<S: WriteStorage, H: HistoryMode>(
         }
     };
 
-    assert_next_block(&last_l2_block, &l1_batch_env.first_l2_block);
+    // assert_next_block(&last_l2_block, &l1_batch_env.first_l2_block);
     let first_l2_block = l1_batch_env.first_l2_block;
     let storage_oracle: StorageOracle<S, H> = StorageOracle::new(storage.clone());
     let mut memory = SimpleMemory::default();

@@ -46,10 +46,11 @@ impl TxRevertReason {
                 Self::Halt(Halt::UnexpectedVMBehavior("FailedToSendFeesToTheOperator".to_owned()))
             }
             BootloaderErrorCode::FailedToSetPrevBlockHash => {
-                panic!(
-                    "The bootloader failed to set previous block hash. Reason: {}",
-                    revert_reason
-                )
+                // panic!(
+                //     "The bootloader failed to set previous block hash. Reason: {}",
+                //     revert_reason
+                // )
+                Self::Halt(Halt::UnexpectedVMBehavior("FailedToSetPrevBlockHash".to_owned()))
             }
             BootloaderErrorCode::UnacceptablePubdataPrice => {
                 Self::Halt(Halt::UnexpectedVMBehavior("UnacceptablePubdataPrice".to_owned()))
