@@ -19,7 +19,7 @@ pub use crate::{
     vm_instance::{is_supported_by_fast_vm, FastVmInstance, LegacyVmInstance},
 };
 
-mod glue;
+pub mod glue;
 pub mod pubdata_builders;
 pub mod tracers;
 pub mod utils;
