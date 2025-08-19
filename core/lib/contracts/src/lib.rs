@@ -474,6 +474,18 @@ pub fn read_bootloader_code(bootloader_type: &str) -> Vec<u8> {
     )
 }
 
+macro_rules! include_contract_bytes {
+    ($path:expr) => {
+        include_bytes!(concat!("../../../../", $path))
+    };
+}
+
+macro_rules! read_zbin_bytecode {
+    ($path:expr $(,)?) => {
+        include_contract_bytes!($path).to_vec()
+    };
+}
+
 /// Reads zbin bytecode from a given path, relative to workspace location.
 pub fn read_zbin_bytecode(relative_zbin_path: impl AsRef<Path>) -> Vec<u8> {
     let bytecode_path = Path::new(&home_path()).join(relative_zbin_path);
@@ -535,7 +547,19 @@ impl BaseSystemContracts {
         };
 
         // `DefaultAccount` is not versioned.
-        let bytecode = read_sys_contract_bytecode("", "DefaultAccount", ContractLanguage::Sol);
+        let default_account_json = include_contract_bytes!(
+            "contracts/system-contracts/artifacts-zk/contracts-preprocessed/DefaultAccount.sol/DefaultAccount.json"
+        );
+        let default_account: serde_json::Value =
+            serde_json::from_slice(default_account_json).unwrap();
+        let bytecode = hex::decode(
+            default_account["bytecode"]
+                .as_str()
+                .unwrap()
+                .strip_prefix("0x")
+                .unwrap(),
+        )
+        .unwrap();
         let hash = BytecodeHash::for_bytecode(&bytecode).value();
         let default_aa = SystemContractCode {
             code: bytecode,
@@ -544,7 +568,13 @@ impl BaseSystemContracts {
 
         // EVM emulator is not versioned either. It is only accessed for protocol versions >=27.
         let evm_emulator = load_evm_emulator.then(|| {
-            let bytecode = read_sys_contract_bytecode("", "EvmEmulator", ContractLanguage::Yul);
+            let evm_emulator_json = include_contract_bytes!(
+                "contracts/system-contracts/zkout/EvmEmulator.yul/EvmEmulator.json"
+            );
+            let evm_emulator_bc: serde_json::Value =
+                serde_json::from_slice(evm_emulator_json).unwrap();
+            let bytecode =
+                hex::decode(evm_emulator_bc["bytecode"]["object"].as_str().unwrap()).unwrap();
             let hash = BytecodeHash::for_bytecode(&bytecode).value();
             SystemContractCode {
                 code: bytecode,
@@ -572,76 +602,76 @@ impl BaseSystemContracts {
     }
 
     pub fn playground_pre_virtual_blocks() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_3_2/playground_block.yul/playground_block.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_virtual_blocks() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode("etc/multivm_bootloaders/vm_virtual_blocks/playground_batch.yul/playground_batch.yul.zbin");
+        let bootloader_bytecode = read_zbin_bytecode!("etc/multivm_bootloaders/vm_virtual_blocks/playground_batch.yul/playground_batch.yul.zbin");
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_virtual_blocks_finish_upgrade_fix() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode("etc/multivm_bootloaders/vm_virtual_blocks_finish_upgrade_fix/playground_batch.yul/playground_batch.yul.zbin");
+        let bootloader_bytecode = read_zbin_bytecode!("etc/multivm_bootloaders/vm_virtual_blocks_finish_upgrade_fix/playground_batch.yul/playground_batch.yul.zbin");
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_boojum() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode("etc/multivm_bootloaders/vm_boojum_integration/playground_batch.yul/playground_batch.yul.zbin");
+        let bootloader_bytecode = read_zbin_bytecode!("etc/multivm_bootloaders/vm_boojum_integration/playground_batch.yul/playground_batch.yul.zbin");
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_allowlist_removal() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode("etc/multivm_bootloaders/vm_remove_allowlist/playground_batch.yul/playground_batch.yul.zbin");
+        let bootloader_bytecode = read_zbin_bytecode!("etc/multivm_bootloaders/vm_remove_allowlist/playground_batch.yul/playground_batch.yul.zbin");
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_1_4_1() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_4_1/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_1_4_2() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_4_2/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_1_5_0_small_memory() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_5_0_small_memory/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_1_5_0_increased_memory() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_5_0_increased_memory/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_post_protocol_defense() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_protocol_defense/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_gateway() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_gateway/playground_batch.yul/playground_batch.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn playground_evm_emulator() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
         "etc/multivm_bootloaders/vm_evm_emulator/playground_batch.yul/playground_batch.yul.zbin",
         );
 
@@ -649,7 +679,7 @@ impl BaseSystemContracts {
     }
 
     pub fn playground_precompiles() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_precompiles/playground_batch.yul/Bootloader.zbin",
         );
 
@@ -657,7 +687,7 @@ impl BaseSystemContracts {
     }
 
     pub fn playground_interop() -> Self {
-        let bootloader_bytecode: Vec<u8> = read_zbin_bytecode(
+        let bootloader_bytecode: Vec<u8> = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_interop/playground_batch.yul/Bootloader.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, true)
@@ -671,98 +701,98 @@ impl BaseSystemContracts {
     }
 
     pub fn estimate_gas_pre_virtual_blocks() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_3_2/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_virtual_blocks() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_virtual_blocks/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_virtual_blocks_finish_upgrade_fix() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_virtual_blocks_finish_upgrade_fix/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_boojum() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_boojum_integration/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_allowlist_removal() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_remove_allowlist/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_1_4_1() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_4_1/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_1_4_2() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_4_2/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_1_5_0_small_memory() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_5_0_small_memory/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_1_5_0_increased_memory() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_1_5_0_increased_memory/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_post_protocol_defense() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_protocol_defense/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_gateway() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_gateway/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, false)
     }
 
     pub fn estimate_gas_evm_emulator() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_evm_emulator/fee_estimate.yul/fee_estimate.yul.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, true)
     }
 
     pub fn estimate_gas_precompiles() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_precompiles/fee_estimate.yul/Bootloader.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, true)
     }
 
     pub fn estimate_gas_interop() -> Self {
-        let bootloader_bytecode = read_zbin_bytecode(
+        let bootloader_bytecode = read_zbin_bytecode!(
             "etc/multivm_bootloaders/vm_interop/fee_estimate.yul/Bootloader.zbin",
         );
         BaseSystemContracts::load_with_bootloader(bootloader_bytecode, true)
