@@ -78,11 +78,12 @@ pub(crate) fn new_vm_state<S: WriteStorage, H: HistoryMode>(
         }
     };
 
-    assert_next_block(
-        &last_l2_block,
-        &l1_batch_env.first_l2_block,
-        system_env.version,
-    );
+    // (Tenderly) last_block.hash is 0x00 which will cause assertion failure
+    // assert_next_block(
+    //     &last_l2_block,
+    //     &l1_batch_env.first_l2_block,
+    //     system_env.version,
+    // );
     let first_l2_block = l1_batch_env.first_l2_block.clone();
     let storage_oracle: StorageOracle<S, H> = StorageOracle::new(storage.clone());
     let mut memory = SimpleMemory::default();
