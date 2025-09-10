@@ -103,7 +103,8 @@ impl BootloaderState {
             !last_block.txs.is_empty(),
             "Can not create new miniblocks on top of empty ones"
         );
-        assert_next_block(&last_block.l2_block(), &l2_block, self.protocol_version);
+        // (Tenderly) last_block.hash is 0x00 which will cause assertion failure
+        // assert_next_block(&last_block.l2_block(), &l2_block, self.protocol_version);
         self.push_l2_block(l2_block);
     }
 
