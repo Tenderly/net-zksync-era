@@ -548,7 +548,7 @@ impl BaseSystemContracts {
 
         // `DefaultAccount` is not versioned.
         let default_account_json = include_contract_bytes!(
-            "contracts/system-contracts/artifacts-zk/contracts-preprocessed/DefaultAccount.sol/DefaultAccount.json"
+            "core/lib/contracts/artifacts/DefaultAccount.json"
         );
         let default_account: serde_json::Value =
             serde_json::from_slice(default_account_json).unwrap();
@@ -569,7 +569,7 @@ impl BaseSystemContracts {
         // EVM emulator is not versioned either. It is only accessed for protocol versions >=27.
         let evm_emulator = load_evm_emulator.then(|| {
             let evm_emulator_json = include_contract_bytes!(
-                "contracts/system-contracts/zkout/EvmEmulator.yul/EvmEmulator.json"
+                "core/lib/contracts/artifacts/EvmEmulator.json"
             );
             let evm_emulator_bc: serde_json::Value =
                 serde_json::from_slice(evm_emulator_json).unwrap();
